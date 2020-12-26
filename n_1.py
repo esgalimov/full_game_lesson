@@ -99,6 +99,23 @@ class Player(pygame.sprite.Sprite):
             self.rect = self.rect.move(-50, 0)
 
 
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+
+
 def generate_level(level):
     new_player, x, y = None, None, None
     for y in range(len(level)):
@@ -152,6 +169,7 @@ run = True
 clock = pygame.time.Clock()
 start_screen()
 player, level_x, level_y = generate_level(load_level(level_name))
+camera = Camera()
 while run:
     clock.tick(FPS)
     for event in pygame.event.get():
@@ -166,6 +184,12 @@ while run:
                player.go_left()
            if event.key == 1073741903:
                player.go_right()
+    screen.fill(pygame.Color([0, 0, 0]))
+    # изменяем ракурс камеры
+    camera.update(player);
+    # обновляем положение всех спрайтов
+    for sprite in all_sprites:
+        camera.apply(sprite)
     player_group.update()
     all_sprites.draw(screen)
     player_group.draw(screen)
