@@ -3,6 +3,10 @@ import sys
 import os
 
 
+level_name = input('Введите имя файла с уровнем (map.txt, map2.txt, map3.txt, map4.txt): ')
+if not os.path.isfile(os.path.join('data', level_name)):
+    print(f"Файл {level_name} не найден")
+    sys.exit()
 pygame.init()
 pygame.display.set_caption('Перемещение героя')
 size = WIDTH, HEIGHT = 500, 500
@@ -147,7 +151,7 @@ def start_screen():
 run = True
 clock = pygame.time.Clock()
 start_screen()
-player, level_x, level_y = generate_level(load_level('map.txt'))
+player, level_x, level_y = generate_level(load_level(level_name))
 while run:
     clock.tick(FPS)
     for event in pygame.event.get():
