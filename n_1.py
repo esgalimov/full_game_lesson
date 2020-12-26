@@ -4,13 +4,14 @@ import os
 
 
 pygame.init()
-pygame.display.set_caption('Mario')
-size = WIDTH, HEIGHT = 500, 400
+pygame.display.set_caption('Перемещение героя')
+size = WIDTH, HEIGHT = 500, 500
 screen = pygame.display.set_mode(size)
 FPS = 50
 player_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
+walls_group = pygame.sprite.Group()
 player = None
 
 
@@ -55,17 +56,43 @@ def load_level(filename):
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(tiles_group, all_sprites)
+        self.pos_x = pos_x
+        self.pos_y = pos_y
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+        if tile_type == 'wall':
+            self.add(walls_group)
 
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
+        self.pos_x = pos_x
+        self.pos_y = pos_y
         self.image = player_image
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 15, tile_height * pos_y + 5)
+
+    def go_up(self):
+        self.rect = self.rect.move(0, -50)
+        if pygame.sprite.spritecollide(self, walls_group, False):
+            self.rect = self.rect.move(0, 50)
+
+    def go_down(self):
+        self.rect = self.rect.move(0, 50)
+        if pygame.sprite.spritecollide(self, walls_group, False):
+            self.rect = self.rect.move(0, -50)
+
+    def go_left(self):
+        self.rect = self.rect.move(-50, 0)
+        if pygame.sprite.spritecollide(self, walls_group, False):
+            self.rect = self.rect.move(50, 0)
+
+    def go_right(self):
+        self.rect = self.rect.move(50, 0)
+        if pygame.sprite.spritecollide(self, walls_group, False):
+            self.rect = self.rect.move(-50, 0)
 
 
 def generate_level(level):
@@ -81,23 +108,6 @@ def generate_level(level):
                 new_player = Player(x, y)
     # вернем игрока, а также размер поля в клетках
     return new_player, x, y
-
-
-class Camera:
-    # зададим начальный сдвиг камеры
-    def __init__(self):
-        self.dx = 0
-        self.dy = 0
-
-    # сдвинуть объект obj на смещение камеры
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
-
-    # позиционировать камеру на объекте target
-    def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
 def terminate():
@@ -138,7 +148,6 @@ run = True
 clock = pygame.time.Clock()
 start_screen()
 player, level_x, level_y = generate_level(load_level('map.txt'))
-camera = Camera()
 while run:
     clock.tick(FPS)
     for event in pygame.event.get():
@@ -146,18 +155,15 @@ while run:
             run = False
         if event.type == pygame.KEYDOWN:
            if event.key == 1073741906:
-               player.rect.y -= 50
+               player.go_up()
            if event.key == 1073741905:
-               player.rect.y += 50
+               player.go_down()
            if event.key == 1073741904:
-               player.rect.x -= 50
+               player.go_left()
            if event.key == 1073741903:
-               player.rect.x += 50
-    # изменяем ракурс камеры
-    camera.update(player);
-    # обновляем положение всех спрайтов
-    for sprite in all_sprites:
-        camera.apply(sprite)
+               player.go_right()
+    player_group.update()
     all_sprites.draw(screen)
+    player_group.draw(screen)
     pygame.display.flip()
-pygame.quit()
+terminate()
